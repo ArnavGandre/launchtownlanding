@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Launchtown — Minimal Landing</title>
+  <link rel="icon" href="/logo.png" type="image/png">
+  <meta name="description" content="Launchtown — cracked devs shipping things, solving problems, building together." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#262626;        /* dark */
+      --accent:#FF0022;    /* red */
+      --muted:#D1D1FF;     /* periwinkle */
+      --text:#F5F5F5;
+    }
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--muted);
+      font-family: 'Poppins', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      letter-spacing: 0.2px;
+      cursor: none; /* remove default cursor */
+    }
+    .wrap{
+      min-height:100%;
+      display:grid;
+      grid-template-rows:1fr auto;
+    }
+    main{
+      display:grid; place-items:center; text-align:center; padding:32px 20px;
+    }
+    .hero{
+      max-width: 900px;
+    }
+    .logo {
+      width: 250px;
+      margin-bottom: 20px;
+    }
+    .title{
+      font-size: clamp(40px, 8vw, 88px);
+      line-height: 1.02;
+      margin: 12px 0 8px;
+      color:var(--accent);
+      font-weight:100;
+    }
+    .subline{
+      font-size: clamp(16px, 2.6vw, 28px);
+      margin: 10px 0 28px;
+      color:var(--muted);
+    }
+    .type-inline{
+      color: var(--accent);
+      position: relative;
+      white-space: nowrap;
+    }
+    /* blinking caret */
+    .type-inline::after{
+      content: "";
+      display:inline-block; width:1px; height:1em; transform: translateY(2px);
+      margin-left: 4px; background: currentColor;
+      animation: blink 1s steps(1, start) infinite;
+    }
+    @keyframes blink{ 50% { opacity: 0; } }
+
+    .actions{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .btn{
+      appearance:none; border:none; cursor:none; text-decoration:none;
+      padding: 12px 18px; border-radius: 8px;
+            font-weight:100; letter-spacing: 0.2px; font-size: 16px;
+      transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+      outline-offset: 3px;
+      background:var(--accent); color:#fff; box-shadow: 0 6px 24px color-mix(in oklab, var(--accent), transparent 70%);
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      pointer-events: none;
+      background: var(--accent);
+      mix-blend-mode: difference; /* inverts colors beneath */
+      transform: translate(-50%, -50%) scale(1);
+      z-index: 9999;
+      transition: transform 0.15s ease-out;
+    }
+
+    .cursor.hover {
+      transform: translate(-50%, -50%) scale(1.5);
+    }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .type-inline::after{ animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main>
+      <section class="hero" aria-label="Launchtown hero">
+        <img src="/logo.png" alt="Launchtown Logo" class="logo">
+        <h1 class="title">launchtown</h1>
+        <p class="subline">
+          cracked devs <span class="type-inline" id="rotating-text" aria-live="polite"></span>
+        </p>
+        <nav class="actions" aria-label="primary">
+          <!-- Replace # with your real invite/community links -->
+          <a class="btn" href="https://discord.gg/54NJ4mVHdT" target="_blank" rel="noopener" aria-label="Join our Discord server">Join the Discord</a>
+          <a class="btn" href="https://www.reddit.com/r/Launchtown/" target="_blank" rel="noopener" aria-label="Visit our Reddit community">Reddit Community</a>
+        </nav>
+      </section>
+    </main>
+  </div>
+
+  <div class="cursor" id="cursor"></div>
+
+  <script>
+    // Typing & backspace loop
+    (function(){
+      const el = document.getElementById('rotating-text');
+      const words = [
+        'shipping things',
+        'solving problems',
+        'building together'
+      ];
+      let wi = 0;        // word index
+      let ci = 0;        // char index
+      let del = false;   // deleting?
+
+      const TYPE_DELAY = 95;   // ms per char when typing
+      const DEL_DELAY  = 55;   // ms per char when deleting
+      const HOLD_FULL  = 1100; // ms hold at full word
+      const HOLD_EMPTY = 300;  // ms hold at empty before next word
+
+      function tick(){
+        const word = words[wi];
+        if(!del){
+          el.textContent = word.slice(0, ci + 1);
+          ci++;
+          if(ci === word.length){
+            del = true;
+            return setTimeout(tick, HOLD_FULL);
+          }
+          return setTimeout(tick, TYPE_DELAY);
+        } else {
+          el.textContent = word.slice(0, ci - 1);
+          ci--;
+          if(ci === 0){
+            del = false;
+            wi = (wi + 1) % words.length;
+            return setTimeout(tick, HOLD_EMPTY);
+          }
+          return setTimeout(tick, DEL_DELAY);
+        }
+      }
+      // Respect reduced motion users: don't animate, just show first word
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if(mediaQuery.matches){
+        el.textContent = words[0];
+      } else {
+        tick();
+      }
+    })();
+
+    // Custom cursor logic
+    const cursor = document.getElementById('cursor');
+    document.addEventListener('mousemove', e => {
+      cursor.style.top = e.clientY + 'px';
+      cursor.style.left = e.clientX + 'px';
+    });
+
+    // Enlarge cursor on hover over links/buttons
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+    });
+  </script>
+</body>
+</html>
